@@ -97,5 +97,4 @@ if __name__ == "__main__":
     df = connector.extract_loan_payments()
     df_shape = connector.load_data_to_df(df)
     file_path=connector.save_data_to_csv(df)
-    print(f'File saved at: {file_path}')
     connector.disconnect()

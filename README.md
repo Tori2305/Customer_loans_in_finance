@@ -4,6 +4,7 @@ Exploratory Data Analysis - Customer Loans in Finance - Project 2.
 ## Description 
 Project number 2 from AiCore extracting data from RDS 
 
+
 ## Learnings
 - Setting up an environment on Github ready to download info onto.
 - Connecting to the cloud to download data.
