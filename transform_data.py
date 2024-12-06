@@ -5,4 +5,4 @@ connector = RDSDatabaseConnector(credentials)
 engine=connector.initialize_engine()
 df = connector.extract_loan_payments()
 
-print(f"Percentage of nulls: {df['mths_since_last_record'].isnull().sum()/len(df)}")
+df['grade'] = df['grade']. astype ('string')

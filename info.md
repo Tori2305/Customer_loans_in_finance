@@ -3,27 +3,27 @@
  0   id                           54231 non-null  int64             
  1   member_id                    54231 non-null  int64
  2   loan_amount                  54231 non-null  int64         
- 3   funded_amount                51224 non-null  float64       int64
- 4   funded_amount_inv            54231 non-null  float64       int64
- 5   term                         49459 non-null  object        int64
+ 3   funded_amount                51224 non-null  float64       
+ 4   funded_amount_inv            54231 non-null  float64       
+ 5   term                         49459 non-null  object        
  6   int_rate                     49062 non-null  float64       
  7   instalment                   54231 non-null  float64       
- 8   grade                        54231 non-null  object        string
+ 8   grade                        54231 non-null  object        string (DONE)
  9   sub_grade                    54231 non-null  object     
- 10  employment_length            52113 non-null  object        int64
- 11  home_ownership               54231 non-null  object        category
+ 10  employment_length            52113 non-null  object        
+ 11  home_ownership               54231 non-null  object        category (DONE)
  12  annual_inc                   54231 non-null  float64       
- 13  verification_status          54231 non-null  object        category
- 14  issue_date                   54231 non-null  object        datetime64
- 15  loan_status                  54231 non-null  object        category
+ 13  verification_status          54231 non-null  object        category (DONE)
+ 14  issue_date                   54231 non-null  object        datetime64[ns] (DONE BUT WILL NEED TO REMOVE DAY AS WILL BE INCORRECT)
+ 15  loan_status                  54231 non-null  object        category (DONE)
  16  payment_plan                 54231 non-null  object
- 17  purpose                      54231 non-null  object        string
+ 17  purpose                      54231 non-null  object        string (DONE)
  18  dti                          54231 non-null  float64
  19  delinq_2yrs                  54231 non-null  int64
- 20  earliest_credit_line         54231 non-null  object        datetime64
+ 20  earliest_credit_line         54231 non-null  object        datetime64 [ns](DONE)
  21  inq_last_6mths               54231 non-null  int64
- 22  mths_since_last_delinq       23229 non-null  float64       timedelta64
- 23  mths_since_last_record       6181 non-null   float64       timedelta64
+ 22  mths_since_last_delinq       23229 non-null  float64       timedelta64[ns] (DONE)
+ 23  mths_since_last_record       6181 non-null   float64       timedelta64 [ns] (DONE)
  24  open_accounts                54231 non-null  int64
  25  total_accounts               54231 non-null  int64
  26  out_prncp                    54231 non-null  float64
@@ -35,15 +35,26 @@
  32  total_rec_late_fee           54231 non-null  float64
  33  recoveries                   54231 non-null  float64       
  34  collection_recovery_fee      54231 non-null  float64
- 35  last_payment_date            54158 non-null  object        timedate64
+ 35  last_payment_date            54158 non-null  object        datetime64[ns] (DONE)
  36  last_payment_amount          54231 non-null  float64
- 37  next_payment_date            21623 non-null  object        timedate64
- 38  last_credit_pull_date        54224 non-null  object        datetime64
+ 37  next_payment_date            21623 non-null  object        datetime64 [ns] (DONE)
+ 38  last_credit_pull_date        54224 non-null  object        datetime64 [ns] (DONE)
  39  collections_12_mths_ex_med   54180 non-null  float64       
  40  mths_since_last_major_derog  7499 non-null   float64
  41  policy_code                  54231 non-null  int64
  42  application_type             54231 non-null  object
 dtypes: float64(20), int64(8), object(15)
+
+
+Updated version: 
+
+
+
+df.issue_date= df['issue_date'].astype('datetime64')
+
+print(df['verification_status'].info())
+
+
 
 Category for 
 
