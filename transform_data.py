@@ -1,8 +1,11 @@
-from db_utils import *
+import pandas as pd
 
-#Extracting all I need from the previous code to test before adding into it:
-connector = RDSDatabaseConnector(credentials)
-engine=connector.initialize_engine()
-df = connector.extract_loan_payments()
+df = pd.df = pd.read_csv("loan_payments.csv")
+print(df.info())
 
-df['grade'] = df['grade']. astype ('string')
+class DataTransform:
+    def __init__ (self,df):
+        self.df = df
+
+    def convert_to_string(self, column_name, format=None, errors = 'raise'):
+        
