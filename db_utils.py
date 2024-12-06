@@ -43,11 +43,9 @@ class RDSDatabaseConnector:
     def save_data_to_csv(self, df, filename="loan_payments.csv"):
         """Saves the given DataFrame to a CSV file."""
         try:
-            os.makedirs("data", exist_ok=True)  # Create 'data' directory if it doesn't exist
-            filepath = os.path.join("data", filename)
-            df.to_csv(filepath, index=False)  # Set index=False to avoid saving row indices
-            print(f"Data saved to {filepath}")
-            return filepath # Return filepath for further use
+            df.to_csv(filename, index=False)  # Set index=False to avoid saving row indices
+            print(f"Data saved to {filename}")
+            return filename # Return filepath for further use
         except Exception as e:
             print(f"Error saving data to CSV: {e}")
             return None
@@ -62,4 +60,8 @@ class RDSDatabaseConnector:
 
 connector = RDSDatabaseConnector(credentials)
 engine=connector.initialize_engine()
-print(engine) #to test
+df = connector.extract_loan_payments()
+file_path=connector.save_data_to_csv(df)
+
+print(f'File saved at: {file_path}')
+connector.disconnect()
