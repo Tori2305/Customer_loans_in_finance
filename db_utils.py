@@ -6,20 +6,42 @@ from sqlalchemy import create_engine # type: ignore
 
 with open('credentials.yaml','r') as file:
     credentials=yaml.safe_load(file)
+    '''
+    Read database connection details from the YAML file. 
+    The safe_load function parses the YAML data so the python 
+    code can use the details to connect to the database. 
+    '''
 
 class RDSDatabaseConnector:
+    '''
+    A class for connecting to and interacting with an RDS database
+
+    Methods include initialising the database, establishing a 
+    connection, extracting data, saving that data to a csv, 
+    understanding the shape of it and closing the connection once complete.    
+    '''
+
     def __init__(self,credentials):
         self.credentials = credentials
         self.conn = None
+        '''
+        Initilaizes the RDSDatabaseConnector with no active connection
+        '''
         self.engine = None    
 
     def initialize_engine(self):
+        '''
+        Initilaizing the database engine for connection
+        '''
         engine_url = (f"postgresql://{self.credentials['RDS_USER']}:{self.credentials['RDS_PASSWORD']}@{self.credentials['RDS_HOST']}/{self.credentials['RDS_DATABASE']}")
         self.engine = create_engine(engine_url)
         print("SQLAlchemy engine initialized successfully.")
         return self.engine
     
     def connection (self):
+        '''
+        Initilizing a connection using info from the YAML file (credentials)
+        '''
         self.conn=psycopg2.connect(
             host=self.credentials['RDS_HOST'],
             port=self.credentials['RDS_PORT'],
@@ -29,6 +51,12 @@ class RDSDatabaseConnector:
         self.engine = self.initialize_engine()
 
     def extract_loan_payments(self):
+        '''
+        Testing to see if the connection has been made, if not response is to connect
+        If connection then set up query of dataset from engine returning it as a new df
+        If connection is set up but there is an error in extracting the data then error
+        message will show
+        '''
         if not self.engine:
             print("SQLAlchemy engine not initialized. Please call connect() first.")
             return None
@@ -51,21 +79,23 @@ class RDSDatabaseConnector:
             return None
         
     def load_data_to_df(self,df):
+        '''Looking at the shape of the data extracted via DataFrame'''
         print(df.shape)
         return df
 
     def disconnect(self):
+      '''Closes connection if one exists'''
       if self.conn:
         self.conn.close()
         print("PostgreSQL connection is closed")
       else:
         print("No active connection to close.")
 
-
-connector = RDSDatabaseConnector(credentials)
-engine=connector.initialize_engine()
-df = connector.extract_loan_payments()
-df_shape = connector.load_data_to_df(df)
-file_path=connector.save_data_to_csv(df)
-print(f'File saved at: {file_path}')
-connector.disconnect()
+if __name__ == "__main__":
+    connector = RDSDatabaseConnector(credentials)
+    engine=connector.initialize_engine()
+    df = connector.extract_loan_payments()
+    df_shape = connector.load_data_to_df(df)
+    file_path=connector.save_data_to_csv(df)
+    print(f'File saved at: {file_path}')
+    connector.disconnect()
