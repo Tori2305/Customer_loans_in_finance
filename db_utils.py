@@ -49,6 +49,10 @@ class RDSDatabaseConnector:
         except Exception as e:
             print(f"Error saving data to CSV: {e}")
             return None
+        
+    def load_data_to_df(self,df):
+        print(df.shape)
+        return df
 
     def disconnect(self):
       if self.conn:
@@ -61,7 +65,7 @@ class RDSDatabaseConnector:
 connector = RDSDatabaseConnector(credentials)
 engine=connector.initialize_engine()
 df = connector.extract_loan_payments()
+df_shape = connector.load_data_to_df(df)
 file_path=connector.save_data_to_csv(df)
-
 print(f'File saved at: {file_path}')
 connector.disconnect()
