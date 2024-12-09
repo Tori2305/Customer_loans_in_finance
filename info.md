@@ -20,10 +20,10 @@
  17  purpose                      54231 non-null  object        string (DONE)
  18  dti                          54231 non-null  float64
  19  delinq_2yrs                  54231 non-null  int64
- 20  earliest_credit_line         54231 non-null  object        datetime64 [ns](DONE)
+ 20  earliest_credit_line         54231 non-null  object      datetime64 [ns](DONE)
  21  inq_last_6mths               54231 non-null  int64
- 22  mths_since_last_delinq       23229 non-null  float64       timedelta64[ns] (DONE)
- 23  mths_since_last_record       6181 non-null   float64       timedelta64 [ns] (DONE)
+ 22  mths_since_last_delinq       23229 non-null  float64     timedelta64[ns] (DONE)
+ 23  mths_since_last_record       6181 non-null   float64     timedelta64 [ns] (DONE)
  24  open_accounts                54231 non-null  int64
  25  total_accounts               54231 non-null  int64
  26  out_prncp                    54231 non-null  float64
@@ -37,8 +37,8 @@
  34  collection_recovery_fee      54231 non-null  float64
  35  last_payment_date            54158 non-null  object        datetime64[ns] (DONE)
  36  last_payment_amount          54231 non-null  float64
- 37  next_payment_date            21623 non-null  object        datetime64 [ns] (DONE)
- 38  last_credit_pull_date        54224 non-null  object        datetime64 [ns] (DONE)
+ 37  next_payment_date            21623 non-null  object       datetime64 [ns] (DONE)
+ 38  last_credit_pull_date        54224 non-null  object       datetime64 [ns] (DONE)
  39  collections_12_mths_ex_med   54180 non-null  float64       
  40  mths_since_last_major_derog  7499 non-null   float64
  41  policy_code                  54231 non-null  int64
