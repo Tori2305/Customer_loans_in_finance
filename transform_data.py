@@ -68,11 +68,16 @@ class DataFrameInfo:
         print(f"The shape of the dataframe is: {shape_of_dataframe}")
 
     def null_counts(self):
-        """Provides sum and percentage of all NULL values"""
+        """Produces new table which returns all columns which have null values"""
         null_counts = self.df.isnull().sum()
-        null_percentages = (null_counts/len(self.df))*100
-        null_info = pd.DataFrame({'Null Count': null_counts, 'Null Percentage': null_percentages})
-        print(null_info)
+        null_cols = null_counts[null_counts > 0] 
+         
+        if not null_cols.empty:
+            null_percentages = (null_cols / len(self.df)) * 100
+            null_info = pd.DataFrame({'Null Count': null_cols, 'Null Percentage': null_percentages})
+            print(null_info)
+        else:
+            print("No columns with null values found.")
 
 describing = DataFrameInfo(df)
 describing.describe()
