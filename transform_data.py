@@ -2,7 +2,7 @@ import pandas as pd
 
 df = pd.df = pd.read_csv("loan_payments.csv")
 
-
+#Milestone3 - Task 1
 class DataTransform:
     def __init__ (self, df):
         self.df = df
@@ -38,4 +38,46 @@ transformer = DataTransform(df)
 transformer.timedelta_cols()
 transformer.datetime_cols()
 transformer.categorical_cols()
-print(transformer.df.info())
+
+#Milestone3 - Task 2
+class DataFrameInfo: 
+    def __init__ (self,df):
+         self.df = df
+    
+    def describe (self):
+        """Describes all columns in the dataframe"""
+        print(self.df.info())
+    
+    def statistical_values(self):
+        """Extracts, median, standard deviation and mean for all dtype that include a number"""
+        for col in self.df.select_dtypes(include=['number']):
+            print(f"Column: {col}" )
+            print(f"  Median: {self.df[col].median()}")
+            print(f"  Standard Deviation: {self.df[col].std()}")
+            print(f"  Mean: {self.df[col].mean()}")
+
+    def distinct_values(self):
+        """Extracts the distinct values within each column within the datafram"""
+        for col in self.df.columns: 
+            if self.df[col].dtype in ['category']:
+                print(f"{col} has: {self.df[col].nunique()} values")
+              
+    def shape (self):
+        """Prints the shape of the dataframe"""
+        shape_of_dataframe = self.df.shape
+        print(f"The shape of the dataframe is: {shape_of_dataframe}")
+
+    def null_counts(self):
+        """Provides sum and percentage of all NULL values"""
+        null_counts = self.df.isnull().sum()
+        null_percentages = (null_counts/len(self.df))*100
+        null_info = pd.DataFrame({'Null Count': null_counts, 'Null Percentage': null_percentages})
+        print(null_info)
+
+describing = DataFrameInfo(df)
+describing.describe()
+describing.statistical_values()
+describing.distinct_values()
+describing.shape()
+describing.null_counts()
+
