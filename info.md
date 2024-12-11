@@ -58,6 +58,15 @@ print(df['verification_status'].info())
 
 Category for 
 
+- term:
+['36 months', '60 months']
+
+- purpose:
+['credit_card' 'debt_consolidation' 'home_improvement' 'small_business'
+ 'renewable_energy' 'major_purchase' 'other' 'moving' 'car' 'medical'
+ 'house' 'vacation' 'wedding' 'educational']
+
+
 - Home_ownership: 
 ['MORTGAGE' 'RENT' 'OWN' 'OTHER' 'NONE']
 
@@ -73,59 +82,45 @@ Category for
 
 
 
-We know that there should be 54231 rows so if any of the Non-Null are less than this then we need to explore these. df.isna().mean*100 provided me with the following answer: 
+To find Null values: self.df.isnull.sum() creates a pandas series which contains the count of null values for each column in the DataFrame. From there we can work out what columns to erase and which ones to impute.
 
-(54231, 43)                  Null values (%)        Explore?
-id                              0.000000
-member_id                       0.000000
-loan_amount                     0.000000
-funded_amount                   5.544799                Y
-funded_amount_inv               0.000000
-term                            8.799395                Y    
-int_rate                        9.531449                Y
-instalment                      0.000000
-grade                           0.000000
-sub_grade                       0.000000
-employment_length               3.905515                Y
-home_ownership                  0.000000
-annual_inc                      0.000000
-verification_status             0.000000
-issue_date                      0.000000
-loan_status                     0.000000
-payment_plan                    0.000000
-purpose                         0.000000
-dti                             0.000000
-delinq_2yrs                     0.000000
-earliest_credit_line            0.000000
-inq_last_6mths                  0.000000
-mths_since_last_delinq         57.166565                Y
-mths_since_last_record         88.602460                Y
-open_accounts                   0.000000
-total_accounts                  0.000000
-out_prncp                       0.000000
-out_prncp_inv                   0.000000
-total_payment                   0.000000
-total_payment_inv               0.000000
-total_rec_prncp                 0.000000
-total_rec_int                   0.000000
-total_rec_late_fee              0.000000
-recoveries                      0.000000
-collection_recovery_fee         0.000000
-last_payment_date               0.134609                Y
-last_payment_amount             0.000000
-next_payment_date              60.127971                Y
-last_credit_pull_date           0.012908                Y
-collections_12_mths_ex_med      0.094042                Y
-mths_since_last_major_derog    86.172116                Y    
-policy_code                     0.000000
-application_type                0.000000
-dtype: float64
+To create a table from the above we do the following: 
 
-Exploration needed for the following in order of highest number of Null values: 
-- mths_since_last_record: The number of months' since the last public record
-- mths_since_last_major_derog: Months' since most recent 90-day or worse rating
+        null_cols = null_counts[null_counts > 0] 
+         
+        if not null_cols.empty:
+            null_percentages = (null_cols / len(self.df)) * 100
+            null_info = pd.DataFrame({'Null Count': null_cols, 'Null Percentage': null_percentages})
+            print(null_info)
+
+From here we see: 
+
+                             Null Count  Null Percentage
+funded_amount                      3007         5.544799
+term                               4772         8.799395
+int_rate                           5169         9.531449
+employment_length                  2118         3.905515
+mths_since_last_delinq            31002        57.166565
+mths_since_last_record            48050        88.602460
+last_payment_date                    73         0.134609
+next_payment_date                 32608        60.127971
+last_credit_pull_date                 7         0.012908
+collections_12_mths_ex_med           51         0.094042
+mths_since_last_major_derog       46732        86.172116
+(base) 
+
+
+So we can see those that need further exploring in order of highest number of Null values: 
+
+The columns which have above 80% null values are listed below, I think that these two are not significant in the results so I believe that we can drop them: [Both may be high due to this being the first public record for some records so therefore irrelevant for some people to fill in]
+- mths_since_last_record: The number of months' since the last public record.
+- mths_since_last_major_derog: Months' since most recent 90-day or worse rating.
+
+Those between 50-80% need further exploration: 
 - next_payment_date: Next scheduled payment date
 - mths_since_last_dealing: The number of months since the last dealing.
+
+These below are low % so will impute using either mean, median or mode:
 - int_rate: Annual (APR) interest rate of the loan.
 - term : number of monthly payments for the loan.
 - funded amount:  The total amount committed to the loan at that point in time
