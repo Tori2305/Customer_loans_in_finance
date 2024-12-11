@@ -34,10 +34,10 @@ class DataTransform:
     def get_dataframe(self):
         return self.df
     
-transformer = DataTransform(df)
-transformer.timedelta_cols()
-transformer.datetime_cols()
-transformer.categorical_cols()
+#transformer = DataTransform(df)
+#transformer.timedelta_cols()
+#transformer.datetime_cols()
+#transformer.categorical_cols()
 
 #Milestone3 - Task 2
 class DataFrameInfo: 
@@ -64,8 +64,10 @@ class DataFrameInfo:
               
     def shape (self):
         """Prints the shape of the dataframe"""
-        shape_of_dataframe = self.df.shape
-        print(f"The shape of the dataframe is: {shape_of_dataframe}")
+        df_rows=self.df.shape[0]
+        df_columns=self.df.shape[1]
+        print(f"Total number of rows: {df_rows}")
+        print(f"Total number of columns: {df_columns}")
 
     def null_counts(self):
         """Produces new table which returns all columns which have null values"""
@@ -83,6 +85,6 @@ describing = DataFrameInfo(df)
 #describing.describe()
 #describing.statistical_values()
 #describing.distinct_values()
-#describing.shape()
-describing.null_counts()
+describing.shape()
+#describing.null_counts()
 

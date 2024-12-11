@@ -46,16 +46,6 @@
 dtypes: float64(20), int64(8), object(15)
 
 
-Updated version: 
-
-
-
-df.issue_date= df['issue_date'].astype('datetime64')
-
-print(df['verification_status'].info())
-
-
-
 Category for 
 
 - term:
@@ -65,7 +55,6 @@ Category for
 ['credit_card' 'debt_consolidation' 'home_improvement' 'small_business'
  'renewable_energy' 'major_purchase' 'other' 'moving' 'car' 'medical'
  'house' 'vacation' 'wedding' 'educational']
-
 
 - Home_ownership: 
 ['MORTGAGE' 'RENT' 'OWN' 'OTHER' 'NONE']
@@ -110,15 +99,17 @@ mths_since_last_major_derog       46732        86.172116
 (base) 
 
 
+Aim of this project: gain a comprehensive understanding the loan portfolio data. Need to enable the business to make more informed decisions about approvals, pricing and risk management.
+
 So we can see those that need further exploring in order of highest number of Null values: 
 
-The columns which have above 80% null values are listed below, I think that these two are not significant in the results so I believe that we can drop them: [Both may be high due to this being the first public record for some records so therefore irrelevant for some people to fill in]
+The columns which have above 80% null values are listed below, I think that these two are not significant in the results so I believe that we can drop them: [Both may be high due to this being the first public record for some records so therefore irrelevant for some people to fill in] - I think these are both NMAR (Not Missing at Random)
 - mths_since_last_record: The number of months' since the last public record.
 - mths_since_last_major_derog: Months' since most recent 90-day or worse rating.
 
-Those between 50-80% need further exploration: 
-- next_payment_date: Next scheduled payment date
-- mths_since_last_dealing: The number of months since the last dealing.
+Those between 50-80% need further exploration: [Both I think we keep but adjust and impit a fixed value]
+- next_payment_date: Next scheduled payment date.[I think this is important so we need to work out a way to impute it] (This is a datetime64[ns] so change to NaN instead? )
+- mths_since_last_delinq: The number of months since the last dealing. [Given we have removed the last_recod as this was higher % I think we should keep this one] (This is int64 so change to )
 
 These below are low % so will impute using either mean, median or mode:
 - int_rate: Annual (APR) interest rate of the loan.
