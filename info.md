@@ -70,7 +70,6 @@ Category for
 
 
 
-
 To find Null values: self.df.isnull.sum() creates a pandas series which contains the count of null values for each column in the DataFrame. From there we can work out what columns to erase and which ones to impute.
 
 To create a table from the above we do the following: 
@@ -89,13 +88,13 @@ funded_amount                      3007         5.544799
 term                               4772         8.799395
 int_rate                           5169         9.531449
 employment_length                  2118         3.905515
-mths_since_last_delinq            31002        57.166565
+mths_since_last_delinq            31002        57.166565 (deliqency = minor crime)
 mths_since_last_record            48050        88.602460
 last_payment_date                    73         0.134609
 next_payment_date                 32608        60.127971
 last_credit_pull_date                 7         0.012908
 collections_12_mths_ex_med           51         0.094042
-mths_since_last_major_derog       46732        86.172116
+mths_since_last_major_derog       46732        86.172116 (derog = Months' since most recent 90-day or worse rating)
 (base) 
 
 
@@ -103,19 +102,23 @@ Aim of this project: gain a comprehensive understanding the loan portfolio data.
 
 So we can see those that need further exploring in order of highest number of Null values: 
 
-The columns which have above 80% null values are listed below, I think that these two are not significant in the results so I believe that we can drop them: [Both may be high due to this being the first public record for some records so therefore irrelevant for some people to fill in] - I think these are both NMAR (Not Missing at Random)
+These below columns are both 80% or above in null values, we could remove these columns to remove these null values BUT looking at the columns, these are useful pieces of information the company will need to know in terms of whether a member is risky or not. A public record = events recorded such as bankruptcies, liens or judgements all negative aspects. Whereas Delinqency = most commonly cited is 90 day delinqency i.e. 90 days overdue which signals financial distress. I think missing values isn't due to missing info just that they haven't had that kind of record before so I think we should change to 'NaN' which will still enable numberical operations. 
 - mths_since_last_record: The number of months' since the last public record.
 - mths_since_last_major_derog: Months' since most recent 90-day or worse rating.
 
-Those between 50-80% need further exploration: [Both I think we keep but adjust and impit a fixed value]
-- next_payment_date: Next scheduled payment date.[I think this is important so we need to work out a way to impute it] (This is a datetime64[ns] so change to NaN instead? )
+        > [df=df.fillna(np.nan)] <
+
+
+
+Those between 50-80%: 
+- next_payment_date: Next scheduled payment date.[Looking at the data, all those with Null, the loan status is 'Charged Off meaning bad debt (5571 records) or Fully Paid (27,037 records)] (This is a datetime64[ns] so change to NaN instead? ) (SQL SELECT next_payment_date, status FROM loan_payments)
 - mths_since_last_delinq: The number of months since the last dealing. [Given we have removed the last_recod as this was higher % I think we should keep this one] (This is int64 so change to )
 
 These below are low % so will impute using either mean, median or mode:
 - int_rate: Annual (APR) interest rate of the loan.
 - term : number of monthly payments for the loan.
 - funded amount:  The total amount committed to the loan at that point in time
-- employment_length: in years
+- employment_length: in years 
 
 
 

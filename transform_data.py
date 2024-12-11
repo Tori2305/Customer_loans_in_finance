@@ -81,10 +81,10 @@ class DataFrameInfo:
         else:
             print("No columns with null values found.")
 
-describing = DataFrameInfo(df)
+#describing = DataFrameInfo(df)
 #describing.describe()
 #describing.statistical_values()
 #describing.distinct_values()
-describing.shape()
+#describing.shape()
 #describing.null_counts()
 
