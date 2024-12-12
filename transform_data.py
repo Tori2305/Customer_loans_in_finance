@@ -88,3 +88,30 @@ class DataFrameInfo:
 #describing.shape()
 #describing.null_counts()
 
+
+class Plotter ():
+    """Class to visualise insights from the data""" 
+    def __init__(self,df):
+        self.df=df
+
+    def null_counts(self):
+        """Counting all the null in each of the columns"""
+        null_counts = self.df.isnull().sum()
+        print(null_counts)
+
+    def remove_high_null_columns(self):
+        """
+        Remove the two columns with the highest % of missing data
+        -mths_since_last_record
+        -mths_since_last_major_derog
+        - next_payment_date: Next scheduled payment date.
+        - mths_since_last_delinq: The number of months since the last dealing.
+        """
+        self.df = self.df.drop(['mths_since_last_record','mths_since_last_major_derog', 'next_payment_date', 'mths_since_last_delinq'],axis=1)
+        print(self.df.info())
+
+
+
+plotting = Plotter(df)
+plotting.null_counts()
+plotting.remove_high_null_columns()

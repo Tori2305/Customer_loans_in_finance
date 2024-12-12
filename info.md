@@ -102,23 +102,27 @@ Aim of this project: gain a comprehensive understanding the loan portfolio data.
 
 So we can see those that need further exploring in order of highest number of Null values: 
 
-These below columns are both 80% or above in null values, we could remove these columns to remove these null values BUT looking at the columns, these are useful pieces of information the company will need to know in terms of whether a member is risky or not. A public record = events recorded such as bankruptcies, liens or judgements all negative aspects. Whereas Delinqency = most commonly cited is 90 day delinqency i.e. 90 days overdue which signals financial distress. I think missing values isn't due to missing info just that they haven't had that kind of record before so I think we should change to 'NaN' which will still enable numberical operations. 
-- mths_since_last_record: The number of months' since the last public record.
-- mths_since_last_major_derog: Months' since most recent 90-day or worse rating.
+I spoke with Vander after getting confused what to do here and he told me that anything over 80% is definitely drop as there is too much missing data to be useful in later analysis. Even 40% is considered too high, after speaking to Vander and him seeing the columns I was referring to he told me to drop them too. 
+Therefore we are going to drop: 
+        - 
+        - mths_since_last_record: The number of months' since the last public record.
+        - mths_since_last_major_derog: Months' since most recent 90-day or worse rating.
+        - next_payment_date: Next scheduled payment date.
+        - mths_since_last_delinq: The number of months since the last dealing.
 
-        > [df=df.fillna(np.nan)] <
+
+These below are low % so will impute using either mean or median
+
+Use median for: 
+- skewed data       
+Use mean for: 
+- normally distributed 
 
 
-
-Those between 50-80%: 
-- next_payment_date: Next scheduled payment date.[Looking at the data, all those with Null, the loan status is 'Charged Off meaning bad debt (5571 records) or Fully Paid (27,037 records)] (This is a datetime64[ns] so change to NaN instead? ) (SQL SELECT next_payment_date, status FROM loan_payments)
-- mths_since_last_delinq: The number of months since the last dealing. [Given we have removed the last_recod as this was higher % I think we should keep this one] (This is int64 so change to )
-
-These below are low % so will impute using either mean, median or mode:
-- int_rate: Annual (APR) interest rate of the loan.
-- term : number of monthly payments for the loan.
-- funded amount:  The total amount committed to the loan at that point in time
-- employment_length: in years 
+- int_rate: Annual (APR) interest rate of the loan - 
+- term : number of monthly payments for the loan - 
+- funded amount:  The total amount committed to the loan at that point in time - 
+- employment_length: in years - 
 
 
 
