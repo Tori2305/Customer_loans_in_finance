@@ -154,3 +154,5 @@ class Plotter ():
 
 #plotting = Plotter()
 #plotting.plot_null_counts(df, new_df)
+
+new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
