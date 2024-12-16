@@ -39,10 +39,10 @@ class DataTransform:
     def get_dataframe(self):
         return self.df
     
-#transformer = DataTransform(df)
-#transformer.timedelta_cols()
-#transformer.datetime_cols()
-#transformer.categorical_cols()
+transformer = DataTransform(df)
+transformer.timedelta_cols()
+transformer.datetime_cols()
+transformer.categorical_cols()
 
 #Milestone3 - Task 2
 class DataFrameInfo: 
@@ -86,12 +86,12 @@ class DataFrameInfo:
         else:
             print("No columns with null values found.")
 
-#describing = DataFrameInfo(df)
-#describing.describe()
-#describing.statistical_values()
-#describing.distinct_values()
-#describing.shape()
-#describing.null_counts()
+describing = DataFrameInfo(df)
+describing.describe()
+describing.statistical_values()
+describing.distinct_values()
+describing.shape()
+describing.null_counts()
 
 class DataFrameTransform():
     def null_counts(self, df):
@@ -155,4 +155,4 @@ class Plotter ():
 #plotting = Plotter()
 #plotting.plot_null_counts(df, new_df)
 
-new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
+#new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
