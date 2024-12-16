@@ -1,4 +1,9 @@
 import pandas as pd
+from scipy.stats import normaltest
+from statsmodels.graphics.gofplots import qqplot
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 
 df = pd.df = pd.read_csv("loan_payments.csv")
 
@@ -88,30 +93,64 @@ class DataFrameInfo:
 #describing.shape()
 #describing.null_counts()
 
-
-class Plotter ():
-    """Class to visualise insights from the data""" 
-    def __init__(self,df):
-        self.df=df
-
-    def null_counts(self):
-        """Counting all the null in each of the columns"""
-        null_counts = self.df.isnull().sum()
-        print(null_counts)
-
-    def remove_high_null_columns(self):
+class DataFrameTransform():
+    def null_counts(self, df):
+        """Produces new table which returns all columns which have null values"""
+        null_counts = df.isnull().sum()
+        return df
+     
+    def remove_high_null_columns(self, df):
         """
-        Remove the two columns with the highest % of missing data
+        Remove the four columns with the highest % of missing data
         -mths_since_last_record
         -mths_since_last_major_derog
         - next_payment_date: Next scheduled payment date.
         - mths_since_last_delinq: The number of months since the last dealing.
         """
-        self.df = self.df.drop(['mths_since_last_record','mths_since_last_major_derog', 'next_payment_date', 'mths_since_last_delinq'],axis=1)
-        print(self.df.info())
+        df = df.drop(['mths_since_last_record','mths_since_last_major_derog', 'next_payment_date', 'mths_since_last_delinq'],axis=1)
+        return df
+
+    def impute_columns_with_median(self, df):
+        df['int_rate'] =df['int_rate'].fillna(df['int_rate']).median()
+        df['funded_amount'] =df['funded_amount'].fillna(df['funded_amount']).median()
+        return df
+
+    def impute_columns_with_mode(self, df):
+        mode_value = df['term'].mode()[0]
+        df['term']=df['term'].fillna(mode_value)
+        return df
+
+    def remove_rows_with_missing_data(self,df):
+        df= df.dropna(subset=['employment_length','collections_12_mths_ex_med','last_credit_pull_date','last_payment_date'])
+        return df
+    
+    def dataframe_new (self):
+        return df
+
+transforming=DataFrameTransform()
+transforming.null_counts(df)
+new_df = transforming.remove_high_null_columns(df)
+new_df = transforming.impute_columns_with_median(new_df)
+new_df = transforming.impute_columns_with_mode(new_df)
+new_df = transforming.remove_rows_with_missing_data(new_df)
+new_df = transforming.remove_rows_with_missing_data(new_df)
 
 
+class Plotter ():
+    """Class to visualise insights from the data""" 
+    def plot_null_counts(self, df, new_df):
+        df_nulls = df.isnull().sum()
+        new_df_nulls= new_df.isnull().sum()
+        null_data = pd.DataFrame({'Original DataFrame': df_nulls, 'New DataFrame': new_df_nulls})
 
-#plotting = Plotter(df)
-#plotting.null_counts()
-#plotting.remove_high_null_columns()
+        plt.figure(figsize=(20, 12))
+        null_data.plot(kind='bar', colormap='viridis')
+
+        plt.title('Null Values Before and After Transformation')
+        plt.ylabel('Count of Null Values')
+        plt.xlabel('Columns')
+        plt.xticks(rotation=75)
+        plt.show()
+
+#plotting = Plotter()
+#plotting.plot_null_counts(df, new_df)
