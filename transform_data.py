@@ -112,6 +112,6 @@ class Plotter ():
 
 
 
-plotting = Plotter(df)
-plotting.null_counts()
-plotting.remove_high_null_columns()
+#plotting = Plotter(df)
+#plotting.null_counts()
+#plotting.remove_high_null_columns()

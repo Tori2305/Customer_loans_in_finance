@@ -111,7 +111,7 @@ Therefore we are going to drop:
         - mths_since_last_delinq: The number of months since the last dealing.
 
 
-These below are low % so will impute using either mean or median
+These below are low % so will impute using either mean or median:
 
 Use median for: 
 - skewed data       
@@ -119,10 +119,11 @@ Use mean for:
 - normally distributed 
 
 
-- int_rate: Annual (APR) interest rate of the loan - 
-- term : number of monthly payments for the loan - 
-- funded amount:  The total amount committed to the loan at that point in time - 
+- int_rate: Annual (APR) interest rate of the loan - impute missing values in this dataset with the median to avoid the influence of outliers and better represent the majority of the data.
+- term : number of monthly payments for the loan - use mode for this! 
+- funded amount:  The total amount committed to the loan at that point in time - impute missing values in this dataset with the median to avoid the influence of outliers and better represent the majority of the data.
 - employment_length: in years - 
 
+If removed the rows of all the null values: 0.09+0.012+0.134+3.9 which would result in MAX of 4.139% of the data being removed is this too much?
 
 
