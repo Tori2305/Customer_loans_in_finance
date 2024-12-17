@@ -152,38 +152,26 @@ class DataFrameTransform():
             original_skew = df[col].dropna().skew()
             best_skew = original_skew
             best_method = 'None'
+            best_transformed_data = df[col]
             
-            # 1. Log transformation
-            if (df[col] > 0).all():  # Check for non-positive values
-                log_transformed = np.log1p(df[col])
-                log_skew = log_transformed.skew()
-                if abs(log_skew) < abs(best_skew):
-                    best_skew = log_skew
-                    best_method = 'Log'
-                    transformed_df[col] = log_transformed
+            transformations =[
+                ('Log', (df[col] > 0).all(), np.log1p(df[col])),
+                ('Square Root', (df[col] >= 0).all(), np.sqrt(df[col])),
+                ('Box-Cox', (df[col] > 0).all(), stats.boxcox(df[col])[0] if (df[col] > 0).all() else df[col])
+                ]
             
-            # 2. Square root transformation
-            if (df[col] >= 0).all():  # Check for negative values
-                sqrt_transformed = np.sqrt(df[col])
-                sqrt_skew = sqrt_transformed.skew()
-                if abs(sqrt_skew) < abs(best_skew):
-                    best_skew = sqrt_skew
-                    best_method = 'Square Root'
-                    transformed_df[col] = sqrt_transformed
-
-            # 3. Box-Cox transformation (requires positive values)
-            if (df[col] > 0).all():
-                boxcox_transformed, lmbda = stats.boxcox(df[col])
-                boxcox_skew = pd.Series(boxcox_transformed).skew()
-                if abs(boxcox_skew) < abs(best_skew):
-                    best_skew = boxcox_skew
-                    best_method = 'Box-Cox'
-                    transformed_df[col] = boxcox_transformed
-
+            for method, condition, transformed_data in transformations:
+                if condition:
+                    skew_after_transformation = pd.Series(transformed_data).skew()
+                if abs(skew_after_transformation) < abs(best_skew):
+                    best_skew = skew_after_transformation
+                    best_method = method
+                    best_transformed_data = transformed_data
+        
+            transformed_df[col] = best_transformed_data
             print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
-
+        
         return transformed_df
-
 
 transforming=DataFrameTransform()
 transforming.null_counts(df)
@@ -258,9 +246,9 @@ class Plotter ():
                 print(f"Skipping column '{col}': Not numeric.")
 
 
-plotting = Plotter()
+#plotting = Plotter()
 #plotting.plot_null_counts(df, new_df)
 #plotting.compare_column_distributions(df, transformed_df, skewed_columns.keys())
-plotting.boxplot_columns(transformed_df, columns_to_check)
+#plotting.boxplot_columns(transformed_df, columns_to_check)
 
 #new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
