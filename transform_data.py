@@ -245,8 +245,22 @@ class Plotter ():
             plt.show()
     
 
+    def boxplot_columns(self, df, columns_to_check):
+        """Generate boxplots for numeric columns to visualize outliers."""
+        for col in columns_to_check:
+            if pd.api.types.is_numeric_dtype(df[col]):
+                plt.figure(figsize=(8, 5))
+                plt.boxplot(df[col].dropna(), vert=False)
+                plt.title(f"Boxplot for {col}")
+                plt.xlabel(col)
+                plt.show()
+            else:
+                print(f"Skipping column '{col}': Not numeric.")
+
+
 plotting = Plotter()
-plotting.plot_null_counts(df, new_df)
-plotting.compare_column_distributions(df, transformed_df, skewed_columns.keys())
+#plotting.plot_null_counts(df, new_df)
+#plotting.compare_column_distributions(df, transformed_df, skewed_columns.keys())
+plotting.boxplot_columns(transformed_df, columns_to_check)
 
 #new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
