@@ -135,7 +135,6 @@ new_df = transforming.impute_columns_with_mode(new_df)
 new_df = transforming.remove_rows_with_missing_data(new_df)
 new_df = transforming.remove_rows_with_missing_data(new_df)
 
-
 class Plotter ():
     """Class to visualise insights from the data""" 
     def plot_null_counts(self, df, new_df):
@@ -151,8 +150,29 @@ class Plotter ():
         plt.xlabel('Columns')
         plt.xticks(rotation=75)
         plt.show()
+    
+    def plot_column_distribution(self, df, columns):
+        for col in columns:
+            plt.figure(figsize=(12, 6))
+            
+            # Histogram
+            plt.subplot(1, 2, 1)
+            sns.histplot(df[col].dropna(), bins=30, kde=False, color='blue', alpha=0.6)
+            plt.title(f"Histogram: {col}")
+            plt.xlabel(col)
+            plt.ylabel("Frequency")
+            
+            # Density Plot
+            plt.subplot(1, 2, 2)
+            sns.kdeplot(df[col].dropna(), color='red', fill=True)
+            plt.title(f"Density Plot: {col}")
+            plt.xlabel(col)
+            plt.ylabel("Density")
+            plt.tight_layout()
+            plt.show()
 
 #plotting = Plotter()
 #plotting.plot_null_counts(df, new_df)
+#plotting.plot_column_distribuion(df,skewed_columns.keys())
 
 #new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
