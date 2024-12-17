@@ -144,6 +144,7 @@ class DataFrameTransform():
 
     def transform_columns(self, df, skewed_columns):
         transformed_df = df.copy()
+
         for col in skewed_columns:
             if not pd.api.types.is_numeric_dtype(df[col]):
                 print(f"Skipping column '{col}': Not numeric.")
@@ -160,18 +161,26 @@ class DataFrameTransform():
                 ('Box-Cox', (df[col] > 0).all(), stats.boxcox(df[col])[0] if (df[col] > 0).all() else df[col])
                 ]
             
-            for method, condition, transformed_data in transformations:
-                if condition:
-                    skew_after_transformation = pd.Series(transformed_data).skew()
+            best_skew, best_method, best_transformed_data = self.determine_best_skew(transformations, best_skew)
+            transformed_df[col] = best_transformed_data
+            print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
+            
+        return transformed_df
+            
+    def determine_best_skew(self, transformations, original_skew):    
+        best_skew = original_skew
+        best_method = 'None'
+        best_transformed_data = None
+
+        for method, condition, transformed_data in transformations:
+            if condition:
+                skew_after_transformation = pd.Series(transformed_data).skew()  # Ensure it's a pandas series
                 if abs(skew_after_transformation) < abs(best_skew):
                     best_skew = skew_after_transformation
                     best_method = method
                     best_transformed_data = transformed_data
-        
-            transformed_df[col] = best_transformed_data
-            print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
-        
-        return transformed_df
+
+        return best_skew, best_method, best_transformed_data
 
 transforming=DataFrameTransform()
 transforming.null_counts(df)
