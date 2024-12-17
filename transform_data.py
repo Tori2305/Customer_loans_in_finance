@@ -4,6 +4,8 @@ from statsmodels.graphics.gofplots import qqplot
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import scipy.stats as stats
+import statsmodels.api as sm
 
 df = pd.df = pd.read_csv("loan_payments.csv")
 
@@ -39,10 +41,10 @@ class DataTransform:
     def get_dataframe(self):
         return self.df
     
-transformer = DataTransform(df)
-transformer.timedelta_cols()
-transformer.datetime_cols()
-transformer.categorical_cols()
+#transformer = DataTransform(df)
+#transformer.timedelta_cols()
+#transformer.datetime_cols()
+#transformer.categorical_cols()
 
 #Milestone3 - Task 2
 class DataFrameInfo: 
@@ -86,12 +88,15 @@ class DataFrameInfo:
         else:
             print("No columns with null values found.")
 
-describing = DataFrameInfo(df)
-describing.describe()
-describing.statistical_values()
-describing.distinct_values()
-describing.shape()
-describing.null_counts()
+#describing = DataFrameInfo(df)
+#describing.describe()
+#describing.statistical_values()
+#describing.distinct_values()
+#describing.shape()
+#describing.null_counts()
+
+columns_to_exclude = ['id', 'member_id']
+columns_to_check = [col for col in df.columns if col not in columns_to_exclude]
 
 class DataFrameTransform():
     def null_counts(self, df):
@@ -126,6 +131,59 @@ class DataFrameTransform():
     
     def dataframe_new (self):
         return df
+    
+    def identify_skewed_columns(self, df, columns_to_check, skew_threshold=2.0):
+        skewed_columns = {}
+        for col in columns_to_check:
+            if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
+                skew_val = df[col].dropna().skew()
+                if not np.isnan(skew_val) and abs(skew_val) > skew_threshold:
+                    skewed_columns[col] = skew_val
+        
+        return skewed_columns
+
+    def transform_columns(self, df, skewed_columns):
+        transformed_df = df.copy()
+        for col in skewed_columns:
+            if not pd.api.types.is_numeric_dtype(df[col]):
+                print(f"Skipping column '{col}': Not numeric.")
+                continue
+            
+            original_skew = df[col].dropna().skew()
+            best_skew = original_skew
+            best_method = 'None'
+            
+            # 1. Log transformation
+            if (df[col] > 0).all():  # Check for non-positive values
+                log_transformed = np.log1p(df[col])
+                log_skew = log_transformed.skew()
+                if abs(log_skew) < abs(best_skew):
+                    best_skew = log_skew
+                    best_method = 'Log'
+                    transformed_df[col] = log_transformed
+            
+            # 2. Square root transformation
+            if (df[col] >= 0).all():  # Check for negative values
+                sqrt_transformed = np.sqrt(df[col])
+                sqrt_skew = sqrt_transformed.skew()
+                if abs(sqrt_skew) < abs(best_skew):
+                    best_skew = sqrt_skew
+                    best_method = 'Square Root'
+                    transformed_df[col] = sqrt_transformed
+
+            # 3. Box-Cox transformation (requires positive values)
+            if (df[col] > 0).all():
+                boxcox_transformed, lmbda = stats.boxcox(df[col])
+                boxcox_skew = pd.Series(boxcox_transformed).skew()
+                if abs(boxcox_skew) < abs(best_skew):
+                    best_skew = boxcox_skew
+                    best_method = 'Box-Cox'
+                    transformed_df[col] = boxcox_transformed
+
+            print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
+
+        return transformed_df
+
 
 transforming=DataFrameTransform()
 transforming.null_counts(df)
@@ -133,7 +191,11 @@ new_df = transforming.remove_high_null_columns(df)
 new_df = transforming.impute_columns_with_median(new_df)
 new_df = transforming.impute_columns_with_mode(new_df)
 new_df = transforming.remove_rows_with_missing_data(new_df)
-new_df = transforming.remove_rows_with_missing_data(new_df)
+
+transformed = DataFrameTransform()
+skewed_columns = transformed.identify_skewed_columns(new_df, columns_to_check)
+transformed_df = transformed.transform_columns(new_df, skewed_columns.keys())
+
 
 class Plotter ():
     """Class to visualise insights from the data""" 
@@ -150,29 +212,41 @@ class Plotter ():
         plt.xlabel('Columns')
         plt.xticks(rotation=75)
         plt.show()
-    
-    def plot_column_distribution(self, df, columns):
+           
+    def compare_column_distributions(self, original_df, transformed_df, columns):
         for col in columns:
-            plt.figure(figsize=(12, 6))
-            
-            # Histogram
-            plt.subplot(1, 2, 1)
-            sns.histplot(df[col].dropna(), bins=30, kde=False, color='blue', alpha=0.6)
-            plt.title(f"Histogram: {col}")
+            plt.figure(figsize=(18, 8))
+
+            # Original Histogram
+            plt.subplot(2, 2, 1)
+            sns.histplot(original_df[col].dropna(), bins=30, kde=False, color='blue', alpha=0.6)
+            plt.title(f"Original Histogram: {col}")
             plt.xlabel(col)
             plt.ylabel("Frequency")
-            
-            # Density Plot
-            plt.subplot(1, 2, 2)
-            sns.kdeplot(df[col].dropna(), color='red', fill=True)
-            plt.title(f"Density Plot: {col}")
+
+            # Transformed Histogram
+            plt.subplot(2, 2, 2)
+            sns.histplot(transformed_df[col].dropna(), bins=30, kde=False, color='green', alpha=0.6)
+            plt.title(f"Transformed Histogram: {col}")
             plt.xlabel(col)
-            plt.ylabel("Density")
+            plt.ylabel("Frequency")
+
+            # Original QQ Plot
+            plt.subplot(2, 2, 3)
+            sm.qqplot(original_df[col].dropna(), line='45', fit=True)
+            plt.title(f"Original QQ Plot: {col}")
+
+            # Transformed QQ Plot
+            plt.subplot(2, 2, 4)
+            sm.qqplot(transformed_df[col].dropna(), line='45', fit=True)
+            plt.title(f"Transformed QQ Plot: {col}")
+
             plt.tight_layout()
             plt.show()
+    
 
-#plotting = Plotter()
-#plotting.plot_null_counts(df, new_df)
-#plotting.plot_column_distribuion(df,skewed_columns.keys())
+plotting = Plotter()
+plotting.plot_null_counts(df, new_df)
+plotting.compare_column_distributions(df, transformed_df, skewed_columns.keys())
 
 #new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
