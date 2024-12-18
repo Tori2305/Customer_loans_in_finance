@@ -1,5 +1,5 @@
 import pandas as pd
-from scipy.stats import normaltest
+from scipy.stats import normaltest, zscore
 from statsmodels.graphics.gofplots import qqplot
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -8,6 +8,7 @@ import scipy.stats as stats
 import statsmodels.api as sm
 
 df = pd.df = pd.read_csv("loan_payments.csv")
+print(df.info())
 
 #Milestone3 - Task 1
 class DataTransform:
@@ -107,29 +108,26 @@ class DataFrameTransform():
     def remove_high_null_columns(self, df):
         """
         Remove the four columns with the highest % of missing data
-        -mths_since_last_record
-        -mths_since_last_major_derog
-        - next_payment_date: Next scheduled payment date.
-        - mths_since_last_delinq: The number of months since the last dealing.
         """
-        df = df.drop(['mths_since_last_record','mths_since_last_major_derog', 'next_payment_date', 'mths_since_last_delinq'],axis=1)
+        columns_to_drop=['mths_since_last_record','mths_since_last_major_derog', 'next_payment_date', 'mths_since_last_delinq']
+        df = df.drop(columns_to_drop, errors='ignore')
         return df
 
     def impute_columns_with_median(self, df):
-        df['int_rate'] =df['int_rate'].fillna(df['int_rate']).median()
-        df['funded_amount'] =df['funded_amount'].fillna(df['funded_amount']).median()
+        for col in ['int_rate','funded_amount']:
+            if col in df.columns:
+                df[col] =df[col].fillna(df[col]).median()
         return df
 
     def impute_columns_with_mode(self, df):
-        mode_value = df['term'].mode()[0]
-        df['term']=df['term'].fillna(mode_value)
+        if 'term' in df.columns:
+            mode_value = df['term'].mode()[0]
+            df['term']=df['term'].fillna(mode_value)
         return df
 
     def remove_rows_with_missing_data(self,df):
-        df= df.dropna(subset=['employment_length','collections_12_mths_ex_med','last_credit_pull_date','last_payment_date'])
-        return df
-    
-    def dataframe_new (self):
+        rows_to_drop = ['employment_length','collections_12_mths_ex_med','last_credit_pull_date','last_payment_date']
+        df= df.dropna(subset=rows_to_drop, how = 'any')
         return df
     
     def identify_skewed_columns(self, df, columns_to_check, skew_threshold=2.0):
@@ -139,29 +137,23 @@ class DataFrameTransform():
                 skew_val = df[col].dropna().skew()
                 if not np.isnan(skew_val) and abs(skew_val) > skew_threshold:
                     skewed_columns[col] = skew_val
-        
+            else:
+                continue
         return skewed_columns
 
     def transform_columns(self, df, skewed_columns):
         transformed_df = df.copy()
 
         for col in skewed_columns:
-            if not pd.api.types.is_numeric_dtype(df[col]):
-                print(f"Skipping column '{col}': Not numeric.")
-                continue
-            
-            original_skew = df[col].dropna().skew()
-            best_skew = original_skew
-            best_method = 'None'
-            best_transformed_data = df[col]
-            
-            transformations =[
-                ('Log', (df[col] > 0).all(), np.log1p(df[col])),
-                ('Square Root', (df[col] >= 0).all(), np.sqrt(df[col])),
-                ('Box-Cox', (df[col] > 0).all(), stats.boxcox(df[col])[0] if (df[col] > 0).all() else df[col])
+            if pd.api.types.is_numeric_dtype(df[col]):
+                original_skew = df[col].dropna().skew()
+                transformations =[
+                    ('Log', (df[col] > 0).all(), np.log1p(df[col])),
+                    ('Square Root', (df[col] >= 0).all(), np.sqrt(df[col])),
+                    ('Box-Cox', (df[col] > 0).all(), stats.boxcox(df[col])[0] if (df[col] > 0).all() else df[col])
                 ]
             
-            best_skew, best_method, best_transformed_data = self.determine_best_skew(transformations, best_skew)
+            best_skew, best_method, best_transformed_data = self.determine_best_skew(transformations, original_skew)
             transformed_df[col] = best_transformed_data
             print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
             
@@ -181,18 +173,39 @@ class DataFrameTransform():
                     best_transformed_data = transformed_data
 
         return best_skew, best_method, best_transformed_data
+    
+    def identify_outliers(self, df, skewed_columns):
+        skewed_cols_list = list(skewed_columns.keys()) if isinstance(skewed_columns, dict) else skewed_columns
+        df[skewed_cols_list] = df[skewed_cols_list].apply(pd.to_numeric, errors='coerce')
+        df = df.dropna(subset=skewed_cols_list)
+       
+        z_scores_df = df[skewed_cols_list].apply(zscore)
+        z_outliers = (z_scores_df.abs() > 3).any(axis=1)
+
+        Q1 = df[skewed_cols_list].quantile(0.25)
+        Q3 = df[skewed_cols_list].quantile(0.75)
+        IQR = Q3 - Q1
+        IQR_outliers = ((df[skewed_cols_list] < (Q1 - 1.5 * IQR)) | ((df[skewed_cols_list] > (Q3 + 1.5 * IQR))).any(axis=1))
+
+        outliers_combined = z_outliers | IQR_outliers
+        print(f"Number of rows identified as outliers using both methods:{outliers_combined.sum()}")
+
+        return outliers_combined
 
 transforming=DataFrameTransform()
-transforming.null_counts(df)
+df = transforming.null_counts(df)
 new_df = transforming.remove_high_null_columns(df)
 new_df = transforming.impute_columns_with_median(new_df)
 new_df = transforming.impute_columns_with_mode(new_df)
 new_df = transforming.remove_rows_with_missing_data(new_df)
 
-transformed = DataFrameTransform()
-skewed_columns = transformed.identify_skewed_columns(new_df, columns_to_check)
-transformed_df = transformed.transform_columns(new_df, skewed_columns.keys())
+columns_to_check = new_df.columns
+skewed_columns = transforming.identify_skewed_columns(new_df,columns_to_check)
+transformed_df = transforming.transform_columns(new_df,skewed_columns)
 
+outliers = transforming.identify_outliers(transformed_df,skewed_columns)
+
+print(outliers)
 
 class Plotter ():
     """Class to visualise insights from the data""" 
@@ -261,3 +274,4 @@ class Plotter ():
 #plotting.boxplot_columns(transformed_df, columns_to_check)
 
 #new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
+
