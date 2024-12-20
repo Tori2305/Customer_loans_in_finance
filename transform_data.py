@@ -1,14 +1,14 @@
 import pandas as pd
-from scipy.stats import normaltest, zscore
-from statsmodels.graphics.gofplots import qqplot
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import scipy.stats as stats
 import statsmodels.api as sm
 
+from scipy.stats import normaltest, zscore
+from statsmodels.graphics.gofplots import qqplot
+
 df = pd.df = pd.read_csv("loan_payments.csv")
-print(df.info())
 
 #Milestone3 - Task 1
 class DataTransform:
@@ -41,15 +41,10 @@ class DataTransform:
 
     def get_dataframe(self):
         return self.df
-    
-#transformer = DataTransform(df)
-#transformer.timedelta_cols()
-#transformer.datetime_cols()
-#transformer.categorical_cols()
 
 #Milestone3 - Task 2
 class DataFrameInfo: 
-    def __init__ (self,df):
+    def __init__ (self, df):
          self.df = df
     
     def describe (self):
@@ -59,21 +54,24 @@ class DataFrameInfo:
     def statistical_values(self):
         """Extracts, median, standard deviation and mean for all dtype that include a number"""
         for col in self.df.select_dtypes(include=['number']):
-            print(f"Column: {col}" )
+            print(f"\n Column: {col}" )
             print(f"  Median: {self.df[col].median()}")
             print(f"  Standard Deviation: {self.df[col].std()}")
             print(f"  Mean: {self.df[col].mean()}")
 
     def distinct_values(self):
-        """Extracts the distinct values within each column within the datafram"""
-        for col in self.df.columns: 
-            if self.df[col].dtype in ['category']:
-                print(f"{col} has: {self.df[col].nunique()} values")
+        """Extracts the distinct values within each column in the dataframe"""
+        result = {}
+        for col in self.df.columns:
+            if self.df[col].dtype in ['category', 'object']:  # Only consider categorical or object columns
+                result[col] = self.df[col].nunique()
+        return result
               
     def shape (self):
         """Prints the shape of the dataframe"""
         df_rows=self.df.shape[0]
         df_columns=self.df.shape[1]
+        print(" ")
         print(f"Total number of rows: {df_rows}")
         print(f"Total number of columns: {df_columns}")
 
@@ -84,6 +82,7 @@ class DataFrameInfo:
          
         if not null_cols.empty:
             null_percentages = (null_cols / len(self.df)) * 100
+            print("\n")
             null_info = pd.DataFrame({'Null Count': null_cols, 'Null Percentage': null_percentages})
             print(null_info)
         else:
@@ -100,62 +99,82 @@ columns_to_exclude = ['id', 'member_id']
 columns_to_check = [col for col in df.columns if col not in columns_to_exclude]
 
 class DataFrameTransform():
-    def null_counts(self, df):
+    def __init__ (self, df):
+        self.df = df
+
+    def null_counts(self):
         """Produces new table which returns all columns which have null values"""
-        null_counts = df.isnull().sum()
-        return df
-     
-    def remove_high_null_columns(self, df):
-        """
-        Remove the four columns with the highest % of missing data
-        """
-        columns_to_drop=['mths_since_last_record','mths_since_last_major_derog', 'next_payment_date', 'mths_since_last_delinq']
-        df = df.drop(columns_to_drop, errors='ignore')
-        return df
+        null_counts = self.df.isnull().sum()
+        null_cols = null_counts[null_counts > 0] 
+        
+        if not null_cols.empty:
+            null_percentages = (null_cols / len(self.df)) * 100
+            # Return the result as a DataFrame with both count and percentage
+            null_info = pd.DataFrame({'Null Count': null_cols, 'Null Percentage': null_percentages})
+            return null_info
+        else:
+            return "No columns with null values found."
 
-    def impute_columns_with_median(self, df):
+    def remove_high_null_columns(self):
+        """
+        Remove the four columns with the highest % of missing data.
+        """
+        columns_to_drop = [
+            "mths_since_last_record", "mths_since_last_major_derog", 
+            "next_payment_date", "mths_since_last_delinq"
+        ]
+        #print(f"Attempting to drop columns: {columns_to_drop}")
+        self.df = self.df.drop(columns=columns_to_drop, axis=1, errors='ignore')
+        #print("Columns after dropping:", self.df.columns)
+        return self.df
+
+    def impute_columns_with_median(self):
         for col in ['int_rate','funded_amount']:
-            if col in df.columns:
-                df[col] =df[col].fillna(df[col]).median()
-        return df
+            if col in self.df.columns:
+                self.df[col] = self.df[col].fillna(self.df[col].median())
+        return self.df
 
-    def impute_columns_with_mode(self, df):
-        if 'term' in df.columns:
-            mode_value = df['term'].mode()[0]
-            df['term']=df['term'].fillna(mode_value)
-        return df
+    def impute_columns_with_mode(self):
+        if 'term' in self.df.columns:
+            mode_value = self.df['term'].mode()[0]
+            self.df['term']=self.df['term'].fillna(mode_value)
+        return self.df
 
-    def remove_rows_with_missing_data(self,df):
+    def remove_rows_with_missing_data(self):
         rows_to_drop = ['employment_length','collections_12_mths_ex_med','last_credit_pull_date','last_payment_date']
-        df= df.dropna(subset=rows_to_drop, how = 'any')
-        return df
+        self.df= self.df.dropna(subset=rows_to_drop, how = 'any')
+        return self.df
     
     def identify_skewed_columns(self, df, columns_to_check, skew_threshold=2.0):
         skewed_columns = {}
         for col in columns_to_check:
-            if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
-                skew_val = df[col].dropna().skew()
+            if col in self.df.columns and pd.api.types.is_numeric_dtype(self.df[col]):
+                skew_val = self.df[col].dropna().skew()
                 if not np.isnan(skew_val) and abs(skew_val) > skew_threshold:
                     skewed_columns[col] = skew_val
-            else:
-                continue
         return skewed_columns
 
-    def transform_columns(self, df, skewed_columns):
-        transformed_df = df.copy()
+    def transform_columns(self, skewed_columns):
+        transformed_df = self.df.copy()
 
         for col in skewed_columns:
-            if pd.api.types.is_numeric_dtype(df[col]):
-                original_skew = df[col].dropna().skew()
+            if pd.api.types.is_numeric_dtype(self.df[col]):
+                original_data = self.df[col].dropna()
+                original_skew = original_data.skew()
+                
                 transformations =[
-                    ('Log', (df[col] > 0).all(), np.log1p(df[col])),
-                    ('Square Root', (df[col] >= 0).all(), np.sqrt(df[col])),
-                    ('Box-Cox', (df[col] > 0).all(), stats.boxcox(df[col])[0] if (df[col] > 0).all() else df[col])
+                    ('Log', (original_data > 0).all(), np.log1p(original_data)),
+                    ('Square Root', (original_data>= 0).all(), np.sqrt(original_data)),
+                    ('Box-Cox', (original_data > 0).all(),
+                    stats.boxcox(original_data)[0] if (original_data > 0).all() else original_data)
                 ]
             
             best_skew, best_method, best_transformed_data = self.determine_best_skew(transformations, original_skew)
-            transformed_df[col] = best_transformed_data
-            print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
+            
+            if best_transformed_data is not None:
+                transformed_df[col]=transformed_df[col].update(best_transformed_data)
+            
+            #print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
             
         return transformed_df
             
@@ -174,38 +193,20 @@ class DataFrameTransform():
 
         return best_skew, best_method, best_transformed_data
     
-    def identify_outliers(self, df, skewed_columns):
-        skewed_cols_list = list(skewed_columns.keys()) if isinstance(skewed_columns, dict) else skewed_columns
-        df[skewed_cols_list] = df[skewed_cols_list].apply(pd.to_numeric, errors='coerce')
-        df = df.dropna(subset=skewed_cols_list)
-       
-        z_scores_df = df[skewed_cols_list].apply(zscore)
-        z_outliers = (z_scores_df.abs() > 3).any(axis=1)
+    def get_updated_dataframe(self):
+       return self.df
+    
+#transforming=DataFrameTransform()
+#df = transforming.null_counts(df)
+#new_df = transforming.remove_high_null_columns(df)
+#new_df = transforming.impute_columns_with_median(new_df)
+#new_df = transforming.impute_columns_with_mode(new_df)
+#new_df = transforming.remove_rows_with_missing_data(new_df)
 
-        Q1 = df[skewed_cols_list].quantile(0.25)
-        Q3 = df[skewed_cols_list].quantile(0.75)
-        IQR = Q3 - Q1
-        IQR_outliers = ((df[skewed_cols_list] < (Q1 - 1.5 * IQR)) | ((df[skewed_cols_list] > (Q3 + 1.5 * IQR))).any(axis=1))
+#columns_to_check = new_df.columns
+#skewed_columns = transforming.identify_skewed_columns(new_df,columns_to_check)
+#transformed_df = transforming.transform_columns(new_df,skewed_columns)
 
-        outliers_combined = z_outliers | IQR_outliers
-        print(f"Number of rows identified as outliers using both methods:{outliers_combined.sum()}")
-
-        return outliers_combined
-
-transforming=DataFrameTransform()
-df = transforming.null_counts(df)
-new_df = transforming.remove_high_null_columns(df)
-new_df = transforming.impute_columns_with_median(new_df)
-new_df = transforming.impute_columns_with_mode(new_df)
-new_df = transforming.remove_rows_with_missing_data(new_df)
-
-columns_to_check = new_df.columns
-skewed_columns = transforming.identify_skewed_columns(new_df,columns_to_check)
-transformed_df = transforming.transform_columns(new_df,skewed_columns)
-
-outliers = transforming.identify_outliers(transformed_df,skewed_columns)
-
-print(outliers)
 
 class Plotter ():
     """Class to visualise insights from the data""" 
@@ -275,3 +276,15 @@ class Plotter ():
 
 #new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
 
+#def identify_outliers(self,df, column):
+    #z_scores_df = df[column].apply(zscore)
+    #z_outliers = ((z_scores_df.abs()>3).any(axis=1))
+
+    #Q1 = df[column].quantile(0.25)
+    #Q3 = df[column].quantile(0.75)
+
+    #IQR = Q3 - Q1
+
+    #IQR_outliers = ((df[column]<(Q1 - 1.5 * IQR))| ((df[column]>(Q3 + 1.5 * IQR)))).any(axis=1)
+
+#identify_outliers(transformed_df, inq_last_6mths)
