@@ -22,9 +22,10 @@ Project number 2 from AiCore extracting data from RDS
 
 ## File Structure of Project
 **Main files for review:**
-    - milestone_3.ipynb contains milestone 1-3 alongside the supplementary docs as listed below.
-    - transform_data is the supplementary code for milestone_3.
-    - milestone_4.ipynb contains just milestone 4
+- milestone_3.ipynb contains milestone 1-3 alongside the supplementary docs as listed below.
+- transform_data is the supplementary code for milestone_3.
+- milestone_4.ipynb contains just milestone 4
+
 - db_utils.py pulls, extracts and saves the data as a csv folder.
 - loan_payments.csv is the extracted data from the RDS in csv format.
 - updated_dataframe.csv this is the csv of the data once I had removed all the null values as per the task (milestone_3 task 3)
