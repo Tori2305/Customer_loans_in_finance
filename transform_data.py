@@ -5,8 +5,9 @@ import numpy as np
 import scipy.stats as stats
 import statsmodels.api as sm
 
-from scipy.stats import normaltest, zscore
+from scipy.stats import normaltest, zscore, boxcox, skew
 from statsmodels.graphics.gofplots import qqplot
+
 
 df = pd.df = pd.read_csv("loan_payments.csv")
 
@@ -88,16 +89,6 @@ class DataFrameInfo:
         else:
             print("No columns with null values found.")
 
-#describing = DataFrameInfo(df)
-#describing.describe()
-#describing.statistical_values()
-#describing.distinct_values()
-#describing.shape()
-#describing.null_counts()
-
-columns_to_exclude = ['id', 'member_id']
-columns_to_check = [col for col in df.columns if col not in columns_to_exclude]
-
 class DataFrameTransform():
     def __init__ (self, df):
         self.df = df
@@ -145,67 +136,99 @@ class DataFrameTransform():
         self.df= self.df.dropna(subset=rows_to_drop, how = 'any')
         return self.df
     
-    def identify_skewed_columns(self, df, columns_to_check, skew_threshold=2.0):
-        skewed_columns = {}
-        for col in columns_to_check:
-            if col in self.df.columns and pd.api.types.is_numeric_dtype(self.df[col]):
-                skew_val = self.df[col].dropna().skew()
-                if not np.isnan(skew_val) and abs(skew_val) > skew_threshold:
-                    skewed_columns[col] = skew_val
-        return skewed_columns
+    def identify_skewed_columns(self, df, columns):
+        skew_cols = df[columns].apply(lambda x: skew(x.dropna()))
 
-    def transform_columns(self, skewed_columns):
-        transformed_df = self.df.copy()
+        highly_skewed_cols = []
+        moderate_skewed_cols = []
+        acceptable_skewed_cols = []
 
-        for col in skewed_columns:
-            if pd.api.types.is_numeric_dtype(self.df[col]):
-                original_data = self.df[col].dropna()
-                original_skew = original_data.skew()
-                
-                transformations =[
-                    ('Log', (original_data > 0).all(), np.log1p(original_data)),
-                    ('Square Root', (original_data>= 0).all(), np.sqrt(original_data)),
-                    ('Box-Cox', (original_data > 0).all(),
-                    stats.boxcox(original_data)[0] if (original_data > 0).all() else original_data)
-                ]
+        for col, skew_value in skew_cols.items():
+            if skew_value > 2:
+                #print(f"Column '{col}' has a high skewness: {skew_value}. Consider transformation.")               
+                highly_skewed_cols.append(col)
+            elif skew_value > 1:
+                #print(f"Column '{col}' has moderate skewness: {skew_value}. May require review.")
+                moderate_skewed_cols.append(col)
+            else:
+                #print(f"Column '{col}' has acceptable skewness: {skew_value}.")
+                acceptable_skewed_cols.append(col)
             
-            best_skew, best_method, best_transformed_data = self.determine_best_skew(transformations, original_skew)
-            
-            if best_transformed_data is not None:
-                transformed_df[col]=transformed_df[col].update(best_transformed_data)
-            
-            #print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
-            
-        return transformed_df
-            
-    def determine_best_skew(self, transformations, original_skew):    
-        best_skew = original_skew
-        best_method = 'None'
-        best_transformed_data = None
+        print(f"Highly skewed cols: {highly_skewed_cols}")
+        print(f"Moderatley skewed cols: {moderate_skewed_cols}")
+        print(f"Acceptable skewed cols: {acceptable_skewed_cols}")
 
-        for method, condition, transformed_data in transformations:
-            if condition:
-                skew_after_transformation = pd.Series(transformed_data).skew()  # Ensure it's a pandas series
-                if abs(skew_after_transformation) < abs(best_skew):
-                    best_skew = skew_after_transformation
-                    best_method = method
-                    best_transformed_data = transformed_data
+        return highly_skewed_cols, moderate_skewed_cols, acceptable_skewed_cols
+    
+    def transform_data_based_on_skewness (self, df, columns):
+        highly_skewed_cols, moderate_skewed_cols, acceptable_skewed_cols = self.identify_skewed_columns(df, columns)
 
-        return best_skew, best_method, best_transformed_data
+        for col in highly_skewed_cols:
+            print(f"Applying log transformation to: {col}")
+            df[col] = np.log1p(df[col]) 
+
+        for col in moderate_skewed_cols:
+            print(f"Applying square root transformation to: {col}")
+            df[col] = np.sqrt(df[col])
+
+        return df
+    
+    def remove_outliers(self,df,columns):
+        for col in columns:
+            Q1 = df[col].quantile(0.25)
+            Q3 = df[col].quantile(0.75)
+
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+
+            df = df[(df[col] >= lower_bound) & (df[col] <= upper_bound)]
+            print(f"Lower bound: {lower_bound}, Upper bound: {upper_bound}")
+
+        return df 
     
     def get_updated_dataframe(self):
        return self.df
-    
-#transforming=DataFrameTransform()
-#df = transforming.null_counts(df)
-#new_df = transforming.remove_high_null_columns(df)
-#new_df = transforming.impute_columns_with_median(new_df)
-#new_df = transforming.impute_columns_with_mode(new_df)
-#new_df = transforming.remove_rows_with_missing_data(new_df)
 
-#columns_to_check = new_df.columns
-#skewed_columns = transforming.identify_skewed_columns(new_df,columns_to_check)
-#transformed_df = transforming.transform_columns(new_df,skewed_columns)
+    #def transform_columns(self, skew_columns):
+       # transformed_df = self.df.copy()
+
+        #for col in skew_columns:
+         #   if pd.api.types.is_numeric_dtype(self.df[col]):
+          #      original_data = self.df[col].dropna()
+           #     original_skew = original_data.skew()
+                
+            #    transformations =[
+             #       ('Log', (original_data > 0).all(), np.log1p(original_data)),
+              #      ('Square Root', (original_data>= 0).all(), np.sqrt(original_data)),
+               #     ('Box-Cox', (original_data > 0).all(),
+                #    stats.boxcox(original_data)[0] if (original_data > 0).all() else original_data)
+                
+            
+           # best_skew, best_method, best_transformed_data = self.determine_best_skew(transformations, original_skew)
+            
+            #if best_transformed_data is not None:
+             #   transformed_df[col]=transformed_df[col].update(best_transformed_data)
+            
+            #print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
+            
+        #return transformed_df
+            
+    #def determine_best_skew(self, transformations, original_skew):    
+        #best_skew = original_skew
+        #best_method = 'None'
+        #best_transformed_data = None
+
+        #for method, condition, transformed_data in transformations:
+        #    if condition:
+         #       skew_after_transformation = pd.Series(transformed_data).skew()  # Ensure it's a pandas series
+          #      if abs(skew_after_transformation) < abs(best_skew):
+           #         best_skew = skew_after_transformation
+            #        best_method = method
+             #       best_transformed_data = transformed_data
+
+        #return best_skew, best_method, best_transformed_data
+    
 
 
 class Plotter ():
@@ -223,42 +246,60 @@ class Plotter ():
         plt.xlabel('Columns')
         plt.xticks(rotation=75)
         plt.show()
-           
-    def compare_column_distributions(self, original_df, transformed_df, columns):
-        for col in columns:
-            plt.figure(figsize=(18, 8))
 
-            # Original Histogram
-            plt.subplot(2, 2, 1)
-            sns.histplot(original_df[col].dropna(), bins=30, kde=False, color='blue', alpha=0.6)
-            plt.title(f"Original Histogram: {col}")
-            plt.xlabel(col)
-            plt.ylabel("Frequency")
+    def visualising_column_distribution(self, df, new_df, column):
+        if isinstance(column,str):
+            column = [column]
+
+        for col in column:
+            plt.figure(figsize=(10,5))
+            plt.subplot(1,2,1)
+            df[col].dropna().hist(bins=30)
+            plt.title(f'Original {col}')
+
+            plt.subplot(1, 2, 2)
+            np.log1p(df[col]).dropna().hist(bins=30)
+            plt.title(f'Log Transformed: {col}')
+
+            plt.show()
+
+#identify_outliers(transformed_df, inq_last_6mths)
+           
+    #def compare_column_distributions(self, original_df, transformed_df, columns):
+      #  for col in columns:
+       #     plt.figure(figsize=(18, 8))
+
+            # Original Boxplot
+        #    plt.subplot(2, 2, 1)
+         #   sns.histplot(original_df[col].dropna(), bins=30, kde=False, color='blue', alpha=0.6)
+          #  plt.title(f"Original Histogram: {col}")
+           # plt.xlabel(col)
+           # plt.ylabel("Frequency")
 
             # Transformed Histogram
-            plt.subplot(2, 2, 2)
-            sns.histplot(transformed_df[col].dropna(), bins=30, kde=False, color='green', alpha=0.6)
-            plt.title(f"Transformed Histogram: {col}")
-            plt.xlabel(col)
-            plt.ylabel("Frequency")
+            #plt.subplot(2, 2, 2)
+            #sns.histplot(transformed_df[col].dropna(), bins=30, kde=False, color='green', alpha=0.6)
+            #plt.title(f"Transformed Histogram: {col}")
+            #plt.xlabel(col)
+            #plt.ylabel("Frequency")
 
             # Original QQ Plot
-            plt.subplot(2, 2, 3)
-            sm.qqplot(original_df[col].dropna(), line='45', fit=True)
-            plt.title(f"Original QQ Plot: {col}")
+            #plt.subplot(2, 2, 3)
+            #sm.qqplot(original_df[col].dropna(), line='45', fit=True)
+            #plt.title(f"Original QQ Plot: {col}")
 
             # Transformed QQ Plot
-            plt.subplot(2, 2, 4)
-            sm.qqplot(transformed_df[col].dropna(), line='45', fit=True)
-            plt.title(f"Transformed QQ Plot: {col}")
+            #plt.subplot(2, 2, 4)
+            #sm.qqplot(transformed_df[col].dropna(), line='45', fit=True)
+            #plt.title(f"Transformed QQ Plot: {col}")
 
-            plt.tight_layout()
-            plt.show()
+            #plt.tight_layout()
+            #plt.show()
     
 
-    def boxplot_columns(self, df, columns_to_check):
+    def boxplot_columns(self, df, column):
         """Generate boxplots for numeric columns to visualize outliers."""
-        for col in columns_to_check:
+        for col in column:
             if pd.api.types.is_numeric_dtype(df[col]):
                 plt.figure(figsize=(8, 5))
                 plt.boxplot(df[col].dropna(), vert=False)
@@ -268,23 +309,23 @@ class Plotter ():
             else:
                 print(f"Skipping column '{col}': Not numeric.")
 
+    def comparison_of_data(self, df, new_df, columns):
+        for col in columns:
+            plt.figure(figsize=(20, 10))
+        
+            # Before removing outliers: Boxplot for all columns
+            plt.subplot(1, 2, 1)
+            sns.boxplot(data=df[col])  # Assuming 'numerical_columns' is your list of columns
+            plt.title(f"Boxplot Before Removing Outliers - {col}")
+            plt.xticks(rotation=90)
 
-#plotting = Plotter()
-#plotting.plot_null_counts(df, new_df)
-#plotting.compare_column_distributions(df, transformed_df, skewed_columns.keys())
-#plotting.boxplot_columns(transformed_df, columns_to_check)
 
-#new_df.to_csv('C:/Users/torig/Project_2/Customer_loans_in_finance/new_dataframe.csv', index=False)
+            # After removing outliers: Boxplot for all columns
+            plt.subplot(1, 2, 2)
+            sns.boxplot(data=new_df[col])  # 'cleaned_df' is your DataFrame after removing outliers
+            plt.title(f"Boxplot After Removing Outliers - {col}")
+            plt.xticks(rotation=90)
 
-#def identify_outliers(self,df, column):
-    #z_scores_df = df[column].apply(zscore)
-    #z_outliers = ((z_scores_df.abs()>3).any(axis=1))
+        plt.tight_layout()
+        plt.show()
 
-    #Q1 = df[column].quantile(0.25)
-    #Q3 = df[column].quantile(0.75)
-
-    #IQR = Q3 - Q1
-
-    #IQR_outliers = ((df[column]<(Q1 - 1.5 * IQR))| ((df[column]>(Q3 + 1.5 * IQR)))).any(axis=1)
-
-#identify_outliers(transformed_df, inq_last_6mths)
