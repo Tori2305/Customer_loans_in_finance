@@ -8,9 +8,6 @@ import statsmodels.api as sm
 from scipy.stats import normaltest, zscore, boxcox, skew
 from statsmodels.graphics.gofplots import qqplot
 
-
-df = pd.df = pd.read_csv("loan_payments.csv")
-
 #Milestone3 - Task 1
 class DataTransform:
     def __init__ (self, df):
