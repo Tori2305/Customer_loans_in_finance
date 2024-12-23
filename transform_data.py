@@ -187,48 +187,14 @@ class DataFrameTransform():
 
         return df 
     
+    def drop_columns(self, df, columns_to_drop):
+        df_dropped = df.drop(columns=columns_to_drop, errors='ignore')
+        
+        print(f"Dropped columns: {columns_to_drop}")
+        return df_dropped
+
     def get_updated_dataframe(self):
        return self.df
-
-    #def transform_columns(self, skew_columns):
-       # transformed_df = self.df.copy()
-
-        #for col in skew_columns:
-         #   if pd.api.types.is_numeric_dtype(self.df[col]):
-          #      original_data = self.df[col].dropna()
-           #     original_skew = original_data.skew()
-                
-            #    transformations =[
-             #       ('Log', (original_data > 0).all(), np.log1p(original_data)),
-              #      ('Square Root', (original_data>= 0).all(), np.sqrt(original_data)),
-               #     ('Box-Cox', (original_data > 0).all(),
-                #    stats.boxcox(original_data)[0] if (original_data > 0).all() else original_data)
-                
-            
-           # best_skew, best_method, best_transformed_data = self.determine_best_skew(transformations, original_skew)
-            
-            #if best_transformed_data is not None:
-             #   transformed_df[col]=transformed_df[col].update(best_transformed_data)
-            
-            #print(f"Column '{col}': Original skew={original_skew:.2f}, Best transformation={best_method}, Skew after transformation={best_skew:.2f}")
-            
-        #return transformed_df
-            
-    #def determine_best_skew(self, transformations, original_skew):    
-        #best_skew = original_skew
-        #best_method = 'None'
-        #best_transformed_data = None
-
-        #for method, condition, transformed_data in transformations:
-        #    if condition:
-         #       skew_after_transformation = pd.Series(transformed_data).skew()  # Ensure it's a pandas series
-          #      if abs(skew_after_transformation) < abs(best_skew):
-           #         best_skew = skew_after_transformation
-            #        best_method = method
-             #       best_transformed_data = transformed_data
-
-        #return best_skew, best_method, best_transformed_data
-    
 
 
 class Plotter ():
@@ -262,40 +228,7 @@ class Plotter ():
             plt.title(f'Log Transformed: {col}')
 
             plt.show()
-
-#identify_outliers(transformed_df, inq_last_6mths)
-           
-    #def compare_column_distributions(self, original_df, transformed_df, columns):
-      #  for col in columns:
-       #     plt.figure(figsize=(18, 8))
-
-            # Original Boxplot
-        #    plt.subplot(2, 2, 1)
-         #   sns.histplot(original_df[col].dropna(), bins=30, kde=False, color='blue', alpha=0.6)
-          #  plt.title(f"Original Histogram: {col}")
-           # plt.xlabel(col)
-           # plt.ylabel("Frequency")
-
-            # Transformed Histogram
-            #plt.subplot(2, 2, 2)
-            #sns.histplot(transformed_df[col].dropna(), bins=30, kde=False, color='green', alpha=0.6)
-            #plt.title(f"Transformed Histogram: {col}")
-            #plt.xlabel(col)
-            #plt.ylabel("Frequency")
-
-            # Original QQ Plot
-            #plt.subplot(2, 2, 3)
-            #sm.qqplot(original_df[col].dropna(), line='45', fit=True)
-            #plt.title(f"Original QQ Plot: {col}")
-
-            # Transformed QQ Plot
-            #plt.subplot(2, 2, 4)
-            #sm.qqplot(transformed_df[col].dropna(), line='45', fit=True)
-            #plt.title(f"Transformed QQ Plot: {col}")
-
-            #plt.tight_layout()
-            #plt.show()
-    
+   
 
     def boxplot_columns(self, df, column):
         """Generate boxplots for numeric columns to visualize outliers."""
