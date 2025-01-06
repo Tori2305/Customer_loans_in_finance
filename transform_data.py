@@ -187,7 +187,7 @@ class DataFrameTransform():
             upper_bound = Q3 + 1.5 * IQR
 
             df = df[(df[col] >= lower_bound) & (df[col] <= upper_bound)]
-            print(f"Lower bound: {lower_bound}, Upper bound: {upper_bound}")
+            print(f"{col} - Lower bound: {lower_bound}, Upper bound: {upper_bound}")
 
         return df 
     
