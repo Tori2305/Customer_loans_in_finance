@@ -1,16 +1,7 @@
 import psycopg2
 import pandas as pd
-import numpy as np
 import yaml
 from sqlalchemy import create_engine
-
-with open('credentials.yaml','r') as file:
-    credentials=yaml.safe_load(file)
-    '''
-    Read database connection details from the YAML file. 
-    The safe_load function parses the YAML data so the python 
-    code can use the details to connect to the database. 
-    '''
 
 class RDSDatabaseConnector:
     '''
@@ -21,37 +12,38 @@ class RDSDatabaseConnector:
     understanding the shape of it and closing the connection once complete.    
     '''
 
-    def __init__(self,credentials):
+    def __init__(self,credentials:dict):
+        '''
+        Initilaizes the RDSDatabaseConnector with the provided credentials.
+        '''   
         self.credentials = credentials
         self.conn = None
         self.engine = None    
-        '''
-        Initilaizes the RDSDatabaseConnector with no active connection
-        '''
-
-    def initialize_engine(self):
-        '''
-        Initilaizing the database engine for connection
-        '''
-        engine_url = (f"postgresql://{self.credentials['RDS_USER']}:{self.credentials['RDS_PASSWORD']}@{self.credentials['RDS_HOST']}/{self.credentials['RDS_DATABASE']}")
-        self.engine = create_engine(engine_url)
-        print("SQLAlchemy engine initialized successfully.")
-        return self.engine
     
     def connection (self):
         '''
-        Initilizing a connection using info from the YAML file (credentials)
+        Initilizing a connection to the database and initializes the SQLAlchemy engine, using info from yaml file.
         '''
-        self.conn=psycopg2.connect(
-            host=self.credentials['RDS_HOST'],
-            port=self.credentials['RDS_PORT'],
-            database=self.credentials['RDS_DATABASE'],
-            user=self.credentials['RDS_USER'],
-            password=self.credentials['RDS_PASSWORD'])
-        
+        try:
+            self.conn=psycopg2.connect(
+                host=self.credentials['RDS_HOST'],
+                port=self.credentials['RDS_PORT'],
+                database=self.credentials['RDS_DATABASE'],
+                user=self.credentials['RDS_USER'],
+                password=self.credentials['RDS_PASSWORD']
+            )
+            print("PostgreSQL connection established successfully")
+            
+            engine_url = (f"postgresql://{self.credentials['RDS_USER']}:{self.credentials['RDS_PASSWORD']}@{self.credentials['RDS_HOST']}/{self.credentials['RDS_DATABASE']}")
+            print("SQLAlchemy engine initialized successfully.")
+            self.engine = create_engine(engine_url)
+        except Exception as e:
+            print(f"Error establishing connection or initializing engine: {e}")
 
-    def extract_loan_payments(self):
+    def extract_data(self, query:str):
         '''
+        Executes a query and returns it as a Pandas database with the class taking a SQL query as a string parameter.
+
         Testing to see if the connection has been made, if not response is to connect
         If connection then set up query of dataset from engine returning it as a new df
         If connection is set up but there is an error in extracting the data then error
@@ -59,16 +51,16 @@ class RDSDatabaseConnector:
         '''
         if not self.engine:
             print("SQLAlchemy engine not initialized. Please call connect() first.")
-            return None
+            return pd.DataFrame()
         try:
-            query = "SELECT * FROM loan_payments" 
             df = pd.read_sql_query(query, self.engine)
+            print("Data extracted successfully")
             return df
         except Exception as e:
             print(f"Error extracting data: {e}")
-            return None
+            return pd.DataFrame()
     
-    def save_data_to_csv(self, df, filename="loan_payments.csv"):
+    def save_data_to_csv(self, df:pd.DataFrame, filename: str ="data.csv"):
         """Saves the given DataFrame to a CSV file."""
         try:
             df.to_csv(filename, index=False)  # Set index=False to avoid saving row indices
@@ -76,9 +68,8 @@ class RDSDatabaseConnector:
             return filename # Return filepath for further use
         except Exception as e:
             print(f"Error saving data to CSV: {e}")
-            return None
         
-    def load_data_to_df(self,df):
+    def data_shape(self,df):
         '''Looking at the shape of the data extracted via DataFrame'''
         print(df.shape)
         return df
@@ -90,12 +81,30 @@ class RDSDatabaseConnector:
         print("PostgreSQL connection is closed")
       else:
         print("No active connection to close.")
+    
+def load_credentials(filepath: str) -> dict:
+    """
+    Loads database credentials from a YAML file.
+    """
+    try:
+        with open(filepath, "r") as file:
+            credentials = yaml.safe_load(file)
+            print("Credentials loaded successfully.")
+            return credentials
+    except Exception as e:
+        print(f"Error loading credentials: {e}")
+        return {}
 
 if __name__ == "__main__":
+    credentials = load_credentials("credentials.yaml")
+
     connector = RDSDatabaseConnector(credentials)
     connector.connection()
-    engine=connector.initialize_engine()
-    df = connector.extract_loan_payments()
-    df_shape = connector.load_data_to_df(df)
-    file_path=connector.save_data_to_csv(df)
+    
+    query = "SELECT * FROM loan_payments"
+    data = connector.extract_data(query)
+
+    if not data.empty:
+        connector.save_data_to_csv(data,filename="loan_payments.csv")
+    
     connector.disconnect()
