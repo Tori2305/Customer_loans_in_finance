@@ -24,10 +24,10 @@ class RDSDatabaseConnector:
     def __init__(self,credentials):
         self.credentials = credentials
         self.conn = None
+        self.engine = None    
         '''
         Initilaizes the RDSDatabaseConnector with no active connection
         '''
-        self.engine = None    
 
     def initialize_engine(self):
         '''
@@ -48,7 +48,7 @@ class RDSDatabaseConnector:
             database=self.credentials['RDS_DATABASE'],
             user=self.credentials['RDS_USER'],
             password=self.credentials['RDS_PASSWORD'])
-        self.engine = self.initialize_engine()
+        
 
     def extract_loan_payments(self):
         '''
@@ -93,6 +93,7 @@ class RDSDatabaseConnector:
 
 if __name__ == "__main__":
     connector = RDSDatabaseConnector(credentials)
+    connector.connection()
     engine=connector.initialize_engine()
     df = connector.extract_loan_payments()
     df_shape = connector.load_data_to_df(df)
