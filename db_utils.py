@@ -1,8 +1,8 @@
-import psycopg2 # type: ignore
-import pandas as pd # type: ignore
-import numpy as np # type: ignore
-import yaml # type: ignore
-from sqlalchemy import create_engine # type: ignore
+import psycopg2
+import pandas as pd
+import numpy as np
+import yaml
+from sqlalchemy import create_engine
 
 with open('credentials.yaml','r') as file:
     credentials=yaml.safe_load(file)
