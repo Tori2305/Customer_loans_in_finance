@@ -7,9 +7,9 @@ class RDSDatabaseConnector:
     '''
     A class for connecting to and interacting with an RDS database
 
-    Methods include initialising the database, establishing a 
+    Methods include initializing the database, establishing a 
     connection, extracting data, saving that data to a csv, 
-    understanding the shape of it and closing the connection once complete.    
+    and closing the connection once complete.    
     '''
 
     def __init__(self,credentials:dict):
@@ -22,7 +22,8 @@ class RDSDatabaseConnector:
     
     def connection (self):
         '''
-        Initilizing a connection to the database and initializes the SQLAlchemy engine, using info from yaml file.
+        Initilizing a connection to the database and initializes the SQLAlchemy engine, 
+        using info from yaml file.
         '''
         try:
             self.conn=psycopg2.connect(
@@ -42,7 +43,8 @@ class RDSDatabaseConnector:
 
     def extract_data(self, query:str):
         '''
-        Executes a query and returns it as a Pandas database with the class taking a SQL query as a string parameter.
+        Executes a query and returns it as a Pandas database with the class taking a 
+        SQL query as a string parameter.
 
         Testing to see if the connection has been made, if not response is to connect
         If connection then set up query of dataset from engine returning it as a new df
@@ -70,7 +72,7 @@ class RDSDatabaseConnector:
             print(f"Error saving data to CSV: {e}")
         
     def data_shape(self,df):
-        '''Looking at the shape of the data extracted via DataFrame'''
+        '''Additional info looking at the shape of the data extracted via DataFrame'''
         print(df.shape)
         return df
 
